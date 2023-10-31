@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+using namespace std;
 
 //Do Not use Transpose_Sparse()
 //Instead Transpose Matrix first then update
@@ -340,21 +341,21 @@ struct IncidenceMatrix{
         Incidence_Matrix.Print_Matrix();
         A.Print_Netlist();
         //rows 0-n
-        for(int i = 0; i < A.rows; i++){
+        for(int i = 0; i < A.rows-1; i++){
             //i = branch
             int source_node = 0;
             int destination_node = 0;
 
             source_node = std::stoi(A.NetList_Matrix[i][1]);
             destination_node = std::stoi(A.NetList_Matrix[i][2]);
+
             int actual_source = source_node -1;
+            cout<<source_node<<endl;
             int actual_destination = destination_node -1;
-            //source node location gets 1
+            cout<<destination_node<<endl;
             Incidence_Matrix.AddElement(actual_source,i,1);
-
-            //source node destination gets -1
-
             Incidence_Matrix.AddElement(actual_destination,i,-1);
+            Incidence_Matrix.Print_Matrix();
 
 
         }
