@@ -195,6 +195,7 @@ struct NetList{
     //User Friendly Interface in works
 
     NetList(){
+
         Source_Count = 1;
         Resistor_Count = 1;
         NetList_Matrix  = nullptr;
@@ -255,6 +256,16 @@ struct NetList{
 
 
 
+    }
+
+
+    void Print_Netlist(){
+        for(int i = 0; i<this->rows;i++){
+            for(int j = 0; j <4; j++){
+                std::cout<<"["<<NetList_Matrix[i][j]<<"]";
+            }
+            std::cout<<std::endl;
+        }
     }
 };
 
@@ -327,6 +338,7 @@ struct IncidenceMatrix{
         Incidence_Matrix.Create_Matrix_Space();
         Incidence_Matrix.All_Zeroes();
         Incidence_Matrix.Print_Matrix();
+        A.Print_Netlist();
         //rows 0-n
         for(int i = 0; i < A.rows; i++){
             //i = branch
@@ -335,13 +347,14 @@ struct IncidenceMatrix{
 
             source_node = std::stoi(A.NetList_Matrix[i][1]);
             destination_node = std::stoi(A.NetList_Matrix[i][2]);
-
+            int actual_source = source_node -1;
+            int actual_destination = destination_node -1;
             //source node location gets 1
-            Incidence_Matrix.AddElement(source_node,i,1);
+            Incidence_Matrix.AddElement(actual_source,i,1);
 
             //source node destination gets -1
 
-            Incidence_Matrix.AddElement(destination_node,i,-1);
+            Incidence_Matrix.AddElement(actual_destination,i,-1);
 
 
         }
