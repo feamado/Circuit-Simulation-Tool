@@ -1,0 +1,366 @@
+
+#ifndef EXCURSION_1_MATRIXREPS_H
+#define EXCURSION_1_MATRIXREPS_H
+#include <iostream>
+#include <string>
+#include <fstream>
+
+//Do Not use Transpose_Sparse()
+//Instead Transpose Matrix first then update
+struct SparseMatrix{
+    int V_COUNT;
+    float * V;
+    int* COL_INDEX;
+    int* ROW_INDEX;
+    SparseMatrix(){
+        this->V_COUNT = NULL;
+        this->V = nullptr;
+        this->COL_INDEX = nullptr;
+        this->ROW_INDEX = nullptr;
+    }
+    SparseMatrix(int v_c , float* v, int* cols , int* rows){
+        this->V_COUNT = v_c;
+        this->V = v;
+        this->COL_INDEX = cols;
+        this->ROW_INDEX = rows;
+    }
+
+    void Transpose_Sparse(){
+        int i = 0;
+        while(i<this->V_COUNT){
+            int tmp = *(this->COL_INDEX + i);
+            *(this->COL_INDEX + i ) = *(this->ROW_INDEX + i);
+            *(this->ROW_INDEX + i) = tmp;
+            i++;
+        }
+
+
+        return;
+    }
+
+
+
+
+
+};
+
+struct Matrix  {
+
+
+
+    int ROWS;
+    int COLS;
+    float ** MATRIX;
+    SparseMatrix S;
+
+    void Create_Matrix_Space()
+    {
+        this->MATRIX = new float *[this->ROWS];
+        for(int i = 0; i<this->ROWS;i++){
+            this->MATRIX[i] = new float [COLS];
+        }
+
+    }
+
+    void Print_Matrix(){
+
+        for(int i = 0; i<ROWS; i++){
+
+            for(int j = 0; j<COLS; j++){
+
+                std::cout<<"["<<*( *(MATRIX + i) + j)<<"], ";
+            }
+            std::cout<<std::endl;
+        }
+    }
+
+
+    void All_Zeroes() {
+
+        for(int i = 0; i <ROWS; i++){
+            for (int j = 0; j < COLS ; ++j) {
+
+                *(*(MATRIX + i) + j) = 0;
+            }
+        }
+
+    }
+
+
+    Matrix TransposeMatrix(){
+
+        Matrix TP;
+        TP.ROWS  = this->COLS;
+        TP.COLS = this->ROWS;
+        TP.Create_Matrix_Space();
+        TP.All_Zeroes();
+        float ** p = TP.MATRIX;
+        for(int i = 0; i <ROWS; i++){
+            for (int j = 0; j < COLS; ++j)
+
+                *(*(p+j) + i)= *(*(MATRIX + i)+j);
+
+        }
+        TP.UpdateSparse();
+        return TP;
+
+
+    }
+
+
+    void AddElement(int r , int c, float v){
+
+        if(r>ROWS || r<0 || c>COLS || c<0){
+            std::cout<<"Outside of matrix range"<<std::endl;
+        }
+        else{
+            if(MATRIX[r][c]!= 0){
+                std::cout<<"Nonzero element has been changed, Any existing sparse representation must be updated"<<std::endl;
+            }
+            MATRIX[r][c] = v;
+        }
+
+
+    }
+
+
+    void UpdateSparse(){
+        //order of sparse matrix representaion
+
+        S.V_COUNT = 0;
+        if(S.ROW_INDEX!= nullptr&&S.COL_INDEX!= nullptr&&S.V!=nullptr) {
+            delete[] S.ROW_INDEX;
+            delete[] S.COL_INDEX;
+            delete[] S.V;
+            //protect from dangling pointers
+            S.ROW_INDEX = nullptr;
+            S.COL_INDEX = nullptr;
+            S.V = nullptr;
+        }
+
+        int l,m,k;
+
+        l = 0;
+        m = 0;
+        k = 0;
+
+        while(l<this->ROWS){
+            while(m<this->COLS){
+                if(this->MATRIX[l][m] != 0) {
+                    k++;
+                }
+                m++;
+            }
+            l++;
+        }
+
+        S.ROW_INDEX = new int[k];
+        S.COL_INDEX = new int[k];
+        S.V = new float [k];
+
+        for (int i = 0; i < this->ROWS; ++i) {
+            for (int j = 0; j < this->COLS; ++j) {
+                if(this->MATRIX[i][j] != 0){
+                    S.V[S.V_COUNT] = MATRIX[i][j];
+                    S.ROW_INDEX[S.V_COUNT] = i;
+                    S.COL_INDEX[S.V_COUNT] = j;
+                    S.V_COUNT++;
+                }
+            }
+        }
+
+    }
+
+
+
+};
+
+/*SparseMatrix Matrix_To_Sparse(Matrix &A){
+    A.UpdateSparse();
+    return A.S;
+}*/
+
+/*SparseMatrix Matrix_Transpose_To_Sparse(Matrix &A){
+    A.TransposeMatrix();
+    return A.S;
+}*/
+
+
+struct NetList{
+    int rows;
+    int Source_Count = 1;
+    int Resistor_Count = 1;
+    std::string** NetList_Matrix = nullptr;
+
+    //User Friendly Interface in works
+
+    NetList(){
+        Source_Count = 1;
+        Resistor_Count = 1;
+        NetList_Matrix  = nullptr;
+    }
+    NetList(std::string filename){
+
+        std::string line;
+        std::string file_name = filename;
+        std::ifstream file_(file_name);
+
+        std::string buffer_component;
+        std::string buffer_source_node;
+        std::string buffer_source_destination;
+        std::string buffer_component_value;
+        this->rows = 0;
+
+        if(file_.is_open()){
+            std::cout<<"is open"<<std::endl;
+            while (std::getline(file_, line)){
+                std::cout<<this->rows<<std::endl;
+                ++this->rows;}
+
+            std::cout<<this->rows<<std::endl;
+            file_.close();
+        }
+        else{
+            std::cout<<"is closed"<<std::endl;
+        }
+
+        this->NetList_Matrix = new std::string*[this->rows];
+        for(int i=0; i<this->rows; i++){
+            this->NetList_Matrix[i] = new std::string [4];
+
+        }
+
+        file_.close();
+        file_.open(file_name);
+
+
+
+        if(file_.is_open()){
+            int i = 0;
+            while(file_>>buffer_component>>buffer_source_node>>buffer_source_destination>>buffer_component_value){
+                *(*(this->NetList_Matrix+i)+0) = buffer_component;
+                *(*(this->NetList_Matrix+i) +1) = buffer_source_node;
+                *(*(this->NetList_Matrix+i) +2) = buffer_source_destination;
+                *(*(this->NetList_Matrix+ i) +3) = buffer_component_value;
+                i++;
+
+
+            }
+
+        }
+
+        file_.close();
+
+
+
+
+
+    }
+};
+
+
+struct IncidenceMatrix{
+
+    NetList A ;
+
+    Matrix Incidence_Matrix;
+    SparseMatrix Incidence_Sparse;
+    //inorder
+    float*Voltage_Sources;
+    float* Resistances;
+    //
+    float* Node_Voltages;
+    IncidenceMatrix(std::string filename){
+
+        this->A = NetList(filename);
+
+    //find voltage and resistance values to create their column vectors
+        /*int k = 0;
+        while('V' == A.NetList_Matrix[k][0][0]){
+            k++;
+        }
+        int k0 = k;
+        this->Voltage_Sources = new float[k];
+
+        while('R' == A.NetList_Matrix[k0][0][0]&&k0<A.rows){
+            k0++;
+        }
+
+        this->Resistances = new float[k-k0];
+        //Number of Connections - Independent Sources.
+        int branch_count = k-k0;
+        int l = 0;
+
+        while(l<k0){
+            Voltage_Sources[l]  = std::stof(A.NetList_Matrix[l][3]);
+            l++;
+        }
+
+        while (l<k){
+            Resistances[l] = std::stof(A.NetList_Matrix[l][3]);
+            l++;
+        }*/
+
+        //find max node
+        int l =0;
+        int node_count = 0;
+
+        while(l<A.rows){
+
+            if (std::stoi(A.NetList_Matrix[l][1]) > node_count) {
+
+                node_count = std::stoi(A.NetList_Matrix[l][1]);
+
+            }
+
+           l++;
+
+
+        }
+
+        //actual incidence matrix conversion
+
+        Incidence_Matrix.ROWS = node_count;
+        // ROWS =  Branches
+        Incidence_Matrix.COLS = A.rows;
+
+        Incidence_Matrix.Create_Matrix_Space();
+        Incidence_Matrix.All_Zeroes();
+        Incidence_Matrix.Print_Matrix();
+        //rows 0-n
+        for(int i = 0; i < A.rows; i++){
+            //i = branch
+            int source_node = 0;
+            int destination_node = 0;
+
+            source_node = std::stoi(A.NetList_Matrix[i][1]);
+            destination_node = std::stoi(A.NetList_Matrix[i][2]);
+
+            //source node location gets 1
+            Incidence_Matrix.AddElement(source_node,i,1);
+
+            //source node destination gets -1
+
+            Incidence_Matrix.AddElement(destination_node,i,-1);
+
+
+        }
+
+        Incidence_Matrix.UpdateSparse();
+
+        Incidence_Sparse = Incidence_Matrix.S;
+
+
+
+    }
+
+
+
+};
+
+
+
+
+
+
+#endif //EXCURSION_1_MATRIXREPS_H
