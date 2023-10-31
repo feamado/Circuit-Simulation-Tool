@@ -1,0 +1,66 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include "MATRICES.cpp"
+
+int main() {
+
+    std::string file_name = "test_cases/test_ex1_netlist.txt";
+
+
+    Matrix B{};
+   B.ROWS = 2;
+   B.COLS = 3;
+   B.Create_Matrix_Space();
+   B.All_Zeroes();
+   B.Print_Matrix();
+   IncidenceMatrix A = IncidenceMatrix(file_name);
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}
+/*std::string line;
+std::string file_name = "test_cases/test_ex1_netlist.txt";
+std::ifstream file_(file_name);
+
+std::string buffer_component;
+std::string buffer_source_node;
+std::string buffer_source_destination;
+std::string buffer_component_value;
+int netlist_row_size = 0;
+
+if(file_.is_open()){
+    std::cout<<"is open"<<std::endl;
+    while (std::getline(file_, line))
+        ++netlist_row_size;
+
+    std::cout<<netlist_row_size<<std::endl;
+    file_.close();
+}
+else{
+    std::cout<<"is closed"<<std::endl;
+}
+std::string ** NetList_2D = new std::string*[netlist_row_size];
+NetList_2D = new std::string *[netlist_row_size];
+for(int i = 0; i<netlist_row_size;i++){
+    NetList_2D[i] = new std::string [4];
+}
+
+file_.close();
+file_.open(file_name);
+
+
+
+if(file_.is_open()){
+    int i = 0;
+    while(file_>>buffer_component>>buffer_source_node>>buffer_source_destination>>buffer_component_value){
+        *(*(NetList_2D+i)+0) = buffer_component;
+        *(*(NetList_2D+i) +1) = buffer_source_node;
+        *(*(NetList_2D+i) + 2) = buffer_source_destination;
+        *(*(NetList_2D + i) + 3) = buffer_component_value;
+        i++;
+
+
+    }
+
+}
+std::cout<<NetList_2D[0][2]<<std::endl;*/
