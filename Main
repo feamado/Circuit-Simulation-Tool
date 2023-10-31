@@ -2,7 +2,10 @@
 #include <string>
 #include <fstream>
 #include "MATRICES.cpp"
-//test
+
+//Using namespace std now
+using namespace std;
+
 int main() {
 
     std::string file_name = "test_cases/test_ex1_netlist.txt";
