@@ -1,12 +1,20 @@
 
-#ifndef EXCURSION_1_MATRIXREPS_H
-#define EXCURSION_1_MATRIXREPS_H
+
 #include <iostream>
 #include <string>
 #include <fstream>
 
 //Do Not use Transpose_Sparse()
 //Instead Transpose Matrix first then update
+
+
+
+
+
+
+
+
+
 struct SparseMatrix{
     int V_COUNT;
     float * V;
@@ -52,7 +60,12 @@ struct Matrix  {
     int COLS;
     float ** MATRIX;
     SparseMatrix S;
-
+    Matrix(){
+        this->ROWS =  0;
+        this->COLS = 0;
+        this->MATRIX = nullptr;
+        this->S = SparseMatrix();
+    }
     void Create_Matrix_Space()
     {
         this->MATRIX = new float *[this->ROWS];
@@ -74,7 +87,6 @@ struct Matrix  {
         }
     }
 
-
     void All_Zeroes() {
 
         for(int i = 0; i <ROWS; i++){
@@ -86,6 +98,18 @@ struct Matrix  {
 
     }
 
+    Matrix Identity(int n){
+        Matrix I;
+        I.ROWS = n;
+        I.COLS = n;
+        I.Create_Matrix_Space();
+        I.All_Zeroes();
+
+        for(int i = 0; i<n; i++){
+            I.MATRIX[i][i] = 1;
+        }
+        return  I;
+    }
 
     Matrix TransposeMatrix(){
 
@@ -101,12 +125,25 @@ struct Matrix  {
                 *(*(p+j) + i)= *(*(MATRIX + i)+j);
 
         }
-        TP.UpdateSparse();
         return TP;
 
 
     }
 
+    Matrix Negate(){
+        Matrix Out;
+        Out.ROWS = this->ROWS;
+        Out.COLS = this->COLS;
+        Out.Create_Matrix_Space();
+        Out.All_Zeroes();
+        for(int i = 0; i<this->ROWS; i++){
+            for(int j = 0; j<this->COLS; j++){
+                Out.MATRIX[i][j] = -(this->MATRIX[i][j]);
+            }
+
+        }
+        return Out;
+    }
 
     void AddElement(int r , int c, float v){
 
@@ -122,7 +159,6 @@ struct Matrix  {
 
 
     }
-
 
     void UpdateSparse(){
         //order of sparse matrix representaion
@@ -173,6 +209,8 @@ struct Matrix  {
 
 
 
+
+
 };
 
 /*SparseMatrix Matrix_To_Sparse(Matrix &A){
@@ -195,7 +233,7 @@ struct NetList{
     //User Friendly Interface in works
 
     NetList(){
-
+        rows = 0;
         Source_Count = 1;
         Resistor_Count = 1;
         NetList_Matrix  = nullptr;
@@ -273,14 +311,24 @@ struct NetList{
 struct IncidenceMatrix{
 
     NetList A ;
-
+    int Row_Size = 0;
+    int Col_Size = 0;
     Matrix Incidence_Matrix;
+    Matrix Transpose_Incidence_Matrix;
     SparseMatrix Incidence_Sparse;
+
+
     //inorder
-    float*Voltage_Sources;
-    float* Resistances;
     //
     float* Node_Voltages;
+
+    IncidenceMatrix(){
+
+        this->A = NetList();
+        this->Incidence_Matrix = Matrix();
+        this->Transpose_Incidence_Matrix = Matrix();
+
+    }
     IncidenceMatrix(std::string filename){
 
         this->A = NetList(filename);
@@ -354,10 +402,21 @@ struct IncidenceMatrix{
             std::cout<<destination_node<<std::endl;
             Incidence_Matrix.AddElement(actual_source,i,1);
             Incidence_Matrix.AddElement(actual_destination,i,-1);
-            Incidence_Matrix.Print_Matrix();
+
 
 
         }
+        Incidence_Matrix.Print_Matrix();
+        this->Transpose_Incidence_Matrix = Incidence_Matrix.TransposeMatrix();
+        this->Transpose_Incidence_Matrix.Print_Matrix();
+        Matrix Test = Transpose_Incidence_Matrix.Negate();
+        Test.Print_Matrix();
+        std::cout<<"_________________________"<<std::endl;
+        std::cout<<"Testing above"<<std::endl;
+
+
+        Row_Size = Incidence_Matrix.ROWS;
+        Col_Size = Incidence_Matrix.COLS;
 
         //Incidence_Matrix.UpdateSparse();
 
@@ -366,14 +425,177 @@ struct IncidenceMatrix{
 
 
     }
-
-
-
 };
 
 
+struct Equation_Matrix{
+    IncidenceMatrix A;
+    //A^Te = V
+    Matrix BRANCH_VOLTAGE_COEFF;
+    //ARRAY OF VOLTAGE  COEFFICENTS;
+    //ARRAY OF RESISTANCES
+    Matrix Row_1;
+    Matrix Row_2;
+    Matrix Row_3;
+    float** Total_Coefficient_Matrix;
+    float* Resistances;
+    float* IVS;
+    float*Constants;
+    int TCM_ROWS;
+    int TCM_COLS;
+    Equation_Matrix(std::string filename){
+        this->A = IncidenceMatrix(filename);
+        //Big Generation
+
+        //Row1
+        this->Row_1.ROWS = A.Incidence_Matrix.ROWS;
+        this->Row_1.COLS = this->Row_1.ROWS + 2*this->A.Incidence_Matrix.COLS;
+        this->Row_1.Create_Matrix_Space();
+        this->Row_1.All_Zeroes();
+        for(int i = 0; i<this->Row_1.ROWS; i++) {
+
+            for (int j = (this->Row_1.ROWS + this->A.Incidence_Matrix.COLS); j < this->Row_1.COLS; j++) {
+                this->Row_1.MATRIX[i][j] =
+                        this->A.Incidence_Matrix.MATRIX[i][j-((this->Row_1.ROWS + this->A.Incidence_Matrix.COLS))];
+            }
+        }
+        //Row 2
+        this->BRANCH_VOLTAGE_COEFF = A.Transpose_Incidence_Matrix.Negate();
+        BRANCH_VOLTAGE_COEFF.Print_Matrix();
+        A.Incidence_Matrix.Print_Matrix();
+        std::cout<<"_____"<<std::endl;
+        A.Incidence_Matrix.Negate().Print_Matrix();
+        std::cout<<"_____"<<std::endl;
+
+        this->Row_2.ROWS = this->BRANCH_VOLTAGE_COEFF.ROWS;
+        this->Row_2.COLS = this->Row_1.COLS;
+        this->Row_2.Create_Matrix_Space();
+        this->Row_2.All_Zeroes();
+
+        int i = 0;
+        int j = 0;
+
+        while(j<this->BRANCH_VOLTAGE_COEFF.COLS){
+            while(i<this->BRANCH_VOLTAGE_COEFF.ROWS){
+                this->Row_2.MATRIX[i][j] = this->BRANCH_VOLTAGE_COEFF.MATRIX[i][j];
+                i++;
+            }
+            i = 0;
+            j++;
+        }
+
+        while (i<this->BRANCH_VOLTAGE_COEFF.ROWS){
+            this->Row_2.MATRIX[i][j+i] = 1;
+            i++;
+        }
+        //Row 3
+        this->Row_3.ROWS = this->Row_2.ROWS;
+        this->Row_3.COLS = this->Row_2.COLS;
+        this->Row_3.Create_Matrix_Space();
+        this->Row_3.All_Zeroes();
+
+        this->IVS = new float[this->Row_1.ROWS + this->Row_2.ROWS + this->Row_3.ROWS];
+
+        for(int i = 0; i< (this->Row_1.ROWS + this->Row_2.ROWS); i++){
+            this->IVS[i] = 0;
+        }
+
+        for(int i = 0; i<this->A.Incidence_Matrix.COLS;i++){
+
+            this->Row_3.MATRIX[i][Row_3.COLS - 2*(A.Incidence_Matrix.COLS) + i] = 1;
+          if(this->A.A.NetList_Matrix[i][0][0] == 'V'){
+              this->IVS[i+this->Row_1.ROWS + this->Row_2.ROWS] = std::stof(this->A.A.NetList_Matrix[i][3]);
+              this->Row_3.MATRIX[i][this->Row_3.COLS-(this->A.Incidence_Matrix.COLS)+i]= 0;
+          }
+          else{
+              this->IVS[i + this->Row_1.ROWS + this->Row_2.ROWS] = 0;
+              this->Row_3.MATRIX[i][this->Row_3.COLS-(this->A.Incidence_Matrix.COLS)+i] =
+                      - std::stof(this->A.A.NetList_Matrix[i][3]);
+
+          }
+      }
+
+
+
+        Row_1.Print_Matrix();
+        Row_2.Print_Matrix();
+        Row_3.Print_Matrix();
+        std::cout<<"________________ Constants"<<std::endl;
+        for(int i = 0; i<8; i++){
+            std::cout<<IVS[i]<<std::endl;
+        }
+        //Stackin procedure
+        /*//appension
+        int x = 0;
+        int a = 0;
+        int b = 0;
+        TCM_ROWS = Row_1.ROWS + Row_2.ROWS + Row_3.ROWS;
+        TCM_COLS = TCM_ROWS;
+        this->Total_Coefficient_Matrix = new float*[TCM_ROWS];
+        std::cout<<"Reached"<<std::endl;
+        for(int i = 0; i<TCM_ROWS;i++){
+            this->Total_Coefficient_Matrix[i] = new float [TCM_COLS];
+        }
+
+       for(int i = 0; i<TCM_ROWS; i++){
+           for(int j = 0; j<TCM_COLS; j++){
+               if(x<Row_1.ROWS*Row_1.COLS) {
+                   Total_Coefficient_Matrix[i][j] = Row_1.MATRIX[a][b];
+                   x++;
+
+               }
+               else if(x>=Row_1.ROWS*Row_1.COLS && x<(Row_2.ROWS*Row_2.COLS+Row_1.ROWS*Row_1.COLS)){
+                   Total_Coefficient_Matrix[i][j] = Row_2.MATRIX[a][b];
+                   x++;
+               }
+               else{
+                   Total_Coefficient_Matrix[i][j] = Row_3.MATRIX[a][b];
+               }
+
+               if(x==Row_1.ROWS*Row_1.COLS){
+                   a = 0;
+                   b = 0;
+               }
+
+               if(x == (Row_1.ROWS*Row_1.COLS+Row_2.ROWS*Row_2.COLS) ){
+                   a = 0;
+                   b = 0;
+               }
+
+               b++;
+
+           }
+           b=0;
+           a++;
+       }*/
+
+
+    }
+
+
+    void Print_EQ_Matrix(){
+
+        for(int i = 0; i<TCM_ROWS; i++){
+
+            for(int j = 0; j<TCM_COLS; j++){
+
+                std::cout<<"["<<*( *(Total_Coefficient_Matrix + i) + j)<<"] ";
+            }
+            std::cout<<std::endl;
+        }
+    }
+
+    };
 
 
 
 
-#endif //EXCURSION_1_MATRIXREPS_H
+
+
+
+
+
+
+
+
+
