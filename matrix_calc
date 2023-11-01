@@ -38,7 +38,9 @@ void solveSystem(double** A, double* B, double* X, int n) {
     }
 }
 
-int main3() {
+
+//SAMPLE MAIN FUNCTION TO DEMONSTRATE ABOVE SYSTEM CALCULATION
+int main() {
 /*
     int n;
     cout << "Enter the number of equations: ";
