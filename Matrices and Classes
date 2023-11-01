@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-using namespace std;
 
 //Do Not use Transpose_Sparse()
 //Instead Transpose Matrix first then update
@@ -239,7 +238,7 @@ struct NetList{
 
         if(file_.is_open()){
             int i = 0;
-            while(file_>>buffer_component>>buffer_source_node>>buffer_source_destination>>buffer_component_value){
+            while(file_>>buffer_component>>buffer_source_node>>buffer_source_destination>>buffer_component_value||line.empty()){
                 *(*(this->NetList_Matrix+i)+0) = buffer_component;
                 *(*(this->NetList_Matrix+i) +1) = buffer_source_node;
                 *(*(this->NetList_Matrix+i) +2) = buffer_source_destination;
@@ -315,13 +314,13 @@ struct IncidenceMatrix{
 
         //find max node
         int l =0;
-        int node_count = 0;
-
+        float node_count = 0;
+        A.Print_Netlist();
         while(l<A.rows){
+            std::cout<<A.NetList_Matrix[l][1]<<std::endl;
+            if ((std::stof(A.NetList_Matrix[l][1])) > node_count) {
 
-            if (std::stoi(A.NetList_Matrix[l][1]) > node_count) {
-
-                node_count = std::stoi(A.NetList_Matrix[l][1]);
+                node_count = std::stof(A.NetList_Matrix[l][1]);
 
             }
 
@@ -341,18 +340,18 @@ struct IncidenceMatrix{
         Incidence_Matrix.Print_Matrix();
         A.Print_Netlist();
         //rows 0-n
-        for(int i = 0; i < A.rows-1; i++){
+        for(int i = 0; i < A.rows; i++){
             //i = branch
             int source_node = 0;
             int destination_node = 0;
-
-            source_node = std::stoi(A.NetList_Matrix[i][1]);
-            destination_node = std::stoi(A.NetList_Matrix[i][2]);
+            std::cout<<A.NetList_Matrix[i][1]<<","<<A.NetList_Matrix[i][2]<<std::endl;
+            source_node = std::stof(A.NetList_Matrix[i][1]);
+            destination_node = std::stof(A.NetList_Matrix[i][2]);
 
             int actual_source = source_node -1;
-            cout<<source_node<<endl;
+            std::cout<<source_node<<std::endl;
             int actual_destination = destination_node -1;
-            cout<<destination_node<<endl;
+            std::cout<<destination_node<<std::endl;
             Incidence_Matrix.AddElement(actual_source,i,1);
             Incidence_Matrix.AddElement(actual_destination,i,-1);
             Incidence_Matrix.Print_Matrix();
@@ -360,9 +359,9 @@ struct IncidenceMatrix{
 
         }
 
-        Incidence_Matrix.UpdateSparse();
+        //Incidence_Matrix.UpdateSparse();
 
-        Incidence_Sparse = Incidence_Matrix.S;
+        //Incidence_Sparse = Incidence_Matrix.S;
 
 
 
