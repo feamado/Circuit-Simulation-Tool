@@ -1,0 +1,121 @@
+#include <iostream>
+
+using namespace std;
+
+
+// Function to perform Gaussian elimination and solve the system of equations
+void solveSystem(double** A, double* B, double* X, int n) {
+    // Forward elimination with row pivoting
+    for (int i = 0; i < n; i++) {
+
+        // Check if the diagonal coefficient is zero and perform row pivoting if needed
+        if (A[i][i] == 0) {
+            int pivot = i + 1;
+            while (pivot < n && A[pivot][i] == 0) {
+                pivot++;
+            }
+
+            // Swap rows to avoid division by zero
+            swap(A[i], A[pivot]);
+            swap(B[i], B[pivot]);
+        }
+
+        for (int j = i + 1; j < n; j++) {
+            double factor = A[j][i] / A[i][i];
+            for (int k = i; k < n; k++) {
+                A[j][k] -= factor * A[i][k];
+            }
+            B[j] -= factor * B[i];
+        }
+    }
+
+    // Backward substitution
+    for (int i = n - 1; i >= 0; i--) {
+        X[i] = B[i] / A[i][i];
+        for (int j = i + 1; j < n; j++) {
+            X[i] -= A[i][j] * X[j] / A[i][i];
+        }
+    }
+}
+
+int main3() {
+/*
+    int n;
+    cout << "Enter the number of equations: ";
+    cin >> n;
+
+    // Allocate memory for the coefficient matrix (A) and constants (B)
+    double** A = new double* [n];
+    double* B = new double[n];
+    double* X = new double[n];
+
+    for (int i = 0; i < n; i++) {
+        A[i] = new double[n];
+    }
+
+    // Input coefficients of the system of equations
+    cout << "Enter the coefficients of the equations:" << endl;
+    for (int i = 0; i < n; i++) {
+        cout << "Equation " << (i + 1) << ": ";
+        for (int j = 0; j < n; j++) {
+            cin >> A[i][j];
+        }
+        cout << "Constant: ";
+        cin >> B[i];
+    }
+*/
+    double matrix[8][8] =
+    {
+        {0,0,0,0,0,1,1,0},
+        {0,0,0,0,0,0,-1,1},
+        {-1,0,1,0,0,0,0,0},
+        {-1,1,0,1,0,0,0,0},
+        {0,-1,0,0,1,0,0,0},
+        {0,0,1,0,0,0,0,0},
+        {0,0,0,1,0,0,-10,0},
+        {0,0,0,0,1,0,0,-20}
+    };
+    double** A = new double* [8];
+    for (int i = 0; i < 8; i++) {
+        A[i] = new double[8];
+    }
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) 
+        {
+            A[i][j] = matrix[i][j];
+        }
+    }
+    double b[] = { 0,0,0,0,0,5,0,0 };
+    double* B = new double[8];
+    for (int i = 0; i < 8; i++) {
+        B[i] = b[i];
+    }
+   
+    double* X = new double[8];
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            std::cout << A[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
+    // Solve the system of equations
+    solveSystem(A, B, X, 8);
+
+    // Output the solution
+    cout << "Solution:" << endl;
+    for (int i = 0; i < 8; i++) {
+        cout << "x" << (i + 1) << " = " << X[i] << endl;
+    }
+
+    // Deallocate memory
+    for (int i = 0; i < 8; i++) {
+        delete[] A[i];
+    }
+    delete[] A;
+    delete[] B;
+    delete[] X;
+
+    return 0;
+}
