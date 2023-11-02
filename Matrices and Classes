@@ -148,11 +148,10 @@ struct Matrix  {
     void AddElement(int r , int c, float v){
 
         if(r>ROWS || r<0 || c>COLS || c<0){
-            std::cout<<"Outside of matrix range"<<std::endl;
+
         }
         else{
             if(MATRIX[r][c]!= 0){
-                std::cout<<"Nonzero element has been changed, Any existing sparse representation must be updated"<<std::endl;
             }
             MATRIX[r][c] = v;
         }
@@ -251,16 +250,15 @@ struct NetList{
         this->rows = 0;
 
         if(file_.is_open()){
-            std::cout<<"is open"<<std::endl;
+            std::cout<<"File Successfully Opened"<<std::endl;
             while (std::getline(file_, line)){
-                std::cout<<this->rows<<std::endl;
                 ++this->rows;}
 
-            std::cout<<this->rows<<std::endl;
+
             file_.close();
         }
         else{
-            std::cout<<"is closed"<<std::endl;
+            std::cout<<"File is closed  or wrong file name"<<std::endl;
         }
 
         this->NetList_Matrix = new std::string*[this->rows];
@@ -363,9 +361,8 @@ struct IncidenceMatrix{
         //find max node
         int l =0;
         float node_count = 0;
-        A.Print_Netlist();
         while(l<A.rows){
-            std::cout<<A.NetList_Matrix[l][1]<<std::endl;
+
             if ((std::stof(A.NetList_Matrix[l][1])) > node_count) {
 
                 node_count = std::stof(A.NetList_Matrix[l][1]);
@@ -385,34 +382,26 @@ struct IncidenceMatrix{
 
         Incidence_Matrix.Create_Matrix_Space();
         Incidence_Matrix.All_Zeroes();
-        Incidence_Matrix.Print_Matrix();
-        A.Print_Netlist();
         //rows 0-n
         for(int i = 0; i < A.rows; i++){
             //i = branch
             int source_node = 0;
             int destination_node = 0;
-            std::cout<<A.NetList_Matrix[i][1]<<","<<A.NetList_Matrix[i][2]<<std::endl;
+
             source_node = std::stof(A.NetList_Matrix[i][1]);
             destination_node = std::stof(A.NetList_Matrix[i][2]);
 
             int actual_source = source_node -1;
-            std::cout<<source_node<<std::endl;
             int actual_destination = destination_node -1;
-            std::cout<<destination_node<<std::endl;
             Incidence_Matrix.AddElement(actual_source,i,1);
             Incidence_Matrix.AddElement(actual_destination,i,-1);
 
 
 
         }
-        Incidence_Matrix.Print_Matrix();
         this->Transpose_Incidence_Matrix = Incidence_Matrix.TransposeMatrix();
-        this->Transpose_Incidence_Matrix.Print_Matrix();
         Matrix Test = Transpose_Incidence_Matrix.Negate();
-        Test.Print_Matrix();
-        std::cout<<"_________________________"<<std::endl;
-        std::cout<<"Testing above"<<std::endl;
+
 
 
         Row_Size = Incidence_Matrix.ROWS;
@@ -441,6 +430,7 @@ struct Equation_Matrix{
     float* Resistances;
     float* IVS;
     float*Constants;
+    int IVS_COUNT;
     int TCM_ROWS;
     int TCM_COLS;
     Equation_Matrix(std::string filename){
@@ -461,11 +451,6 @@ struct Equation_Matrix{
         }
         //Row 2
         this->BRANCH_VOLTAGE_COEFF = A.Transpose_Incidence_Matrix.Negate();
-        BRANCH_VOLTAGE_COEFF.Print_Matrix();
-        A.Incidence_Matrix.Print_Matrix();
-        std::cout<<"_____"<<std::endl;
-        A.Incidence_Matrix.Negate().Print_Matrix();
-        std::cout<<"_____"<<std::endl;
 
         this->Row_2.ROWS = this->BRANCH_VOLTAGE_COEFF.ROWS;
         this->Row_2.COLS = this->Row_1.COLS;
@@ -509,21 +494,15 @@ struct Equation_Matrix{
           }
           else{
               this->IVS[i + this->Row_1.ROWS + this->Row_2.ROWS] = 0;
-              this->Row_3.MATRIX[i][this->Row_3.COLS-(this->A.Incidence_Matrix.COLS)+i] =
-                      - std::stof(this->A.A.NetList_Matrix[i][3]);
+              this->Row_3.MATRIX[i][this->Row_3.COLS-(this->A.Incidence_Matrix.COLS)+i] = -std::stof(this->A.A.NetList_Matrix[i][3]);
 
           }
       }
 
 
 
-        Row_1.Print_Matrix();
-        Row_2.Print_Matrix();
-        Row_3.Print_Matrix();
-        std::cout<<"________________ Constants"<<std::endl;
-        for(int i = 0; i<8; i++){
-            std::cout<<IVS[i]<<std::endl;
-        }
+
+
         //Stackin procedure
         /*//appension
         int x = 0;
@@ -568,6 +547,57 @@ struct Equation_Matrix{
            b=0;
            a++;
        }*/
+        int x = 0;
+        int a = 0;
+        int b = 0;
+        this-> TCM_ROWS = Row_1.ROWS + Row_2.ROWS + Row_3.ROWS;
+        this-> TCM_COLS = Row_1.COLS; // Assuming the number of columns remains the same for all matrices
+        this->Total_Coefficient_Matrix = new float*[TCM_ROWS];
+
+        for(int i = 0; i < TCM_ROWS; i++){
+            this->Total_Coefficient_Matrix[i] = new float[TCM_COLS];
+        }
+
+        for(int i = 0; i < TCM_ROWS; i++){
+            for(int j = 0; j < TCM_COLS; j++){
+                if(x < Row_1.ROWS * Row_1.COLS) {
+                    Total_Coefficient_Matrix[i][j] = Row_1.MATRIX[a][b];
+                    x++;
+                }
+                else if(x >= Row_1.ROWS * Row_1.COLS && x < (Row_2.ROWS * Row_2.COLS + Row_1.ROWS * Row_1.COLS)){
+                    Total_Coefficient_Matrix[i][j] = Row_2.MATRIX[a][b];
+                    x++;
+                }
+                else{
+                    Total_Coefficient_Matrix[i][j] = Row_3.MATRIX[a][b];
+                    x++;
+                }
+
+                if(x == Row_1.ROWS * Row_1.COLS){
+                    a = 0;
+                    b = 0;
+                }
+
+                if(x == (Row_1.ROWS * Row_1.COLS + Row_2.ROWS * Row_2.COLS)){
+                    a = 0;
+                    b = 0;
+                }
+
+                b++;
+            }
+            a++;
+            if (i == Row_1.ROWS - 1 || i == Row_1.ROWS + Row_2.ROWS - 1) {
+                a = 0;
+            }
+            b = 0;
+        }
+
+
+
+
+
+
+
 
 
     }
@@ -579,7 +609,7 @@ struct Equation_Matrix{
 
             for(int j = 0; j<TCM_COLS; j++){
 
-                std::cout<<"["<<*( *(Total_Coefficient_Matrix + i) + j)<<"] ";
+                std::cout<<"["<<Total_Coefficient_Matrix[i][j]<<"] ";
             }
             std::cout<<std::endl;
         }
